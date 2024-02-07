@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import {IRandomOracle} from "./IRandomOracle.sol";
+import {IRandomOracle} from "./interfaces/IRandomOracle.sol";
 
 contract MockRandomOracle is IRandomOracle {
     function getRandomNumber() external view returns (uint256) {

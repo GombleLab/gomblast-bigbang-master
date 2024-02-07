@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./INativeSwap.sol";
+import "./interfaces/INativeSwap.sol";
 
 contract MockSwap is INativeSwap {
     using SafeERC20 for IERC20;

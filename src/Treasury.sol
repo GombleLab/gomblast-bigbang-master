@@ -6,7 +6,7 @@ import "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
 
-import "./ITreasury.sol";
+import "./interfaces/ITreasury.sol";
 
 contract Treasury is Ownable, ITreasury {
     using SafeERC20 for IERC20;

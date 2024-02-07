@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import "../src/MockToken.sol";
-import "../src/ITreasury.sol";
+import "../src/interfaces/ITreasury.sol";
 import "../src/MockSwap.sol";
 import "../src/Treasury.sol";
 import "../src/MockRandomOracle.sol";
