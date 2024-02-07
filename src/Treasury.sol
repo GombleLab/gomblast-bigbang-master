@@ -44,6 +44,20 @@ contract Treasury is Ownable, ITreasury {
         return _userList.length;
     }
 
+    function getAllUsers() external view returns (address[] memory) {
+        return _userList;
+    }
+
+    function getUsers(uint256 start, uint256 end) external view returns (address[] memory) {
+        address[] memory users = new address[](end - start);
+        for (uint256 i = start; i < end; ++i) {
+            unchecked {
+                users[i - start] = _userList[i];
+            }
+        }
+        return users;
+    }
+
     function claimableInterest(address user) public view returns (uint256) {
         if (!isRegistered(user)) return 0;
         uint256 userSnapshot = _userInfoMap[user].snapshot;

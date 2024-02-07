@@ -37,6 +37,10 @@ interface ITreasury {
 
     function totalUsers() external view returns (uint256);
 
+    function getAllUsers() external view returns (address[] memory);
+
+    function getUsers(uint256 start, uint256 end) external view returns (address[] memory);
+
     function isRegistered(address user) external view returns (bool);
 
     function minimumPot() external view returns (uint256);
