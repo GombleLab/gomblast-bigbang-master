@@ -17,42 +17,51 @@ contract Treasury is Ownable, ITreasury {
     IERC20 public immutable override token;
     uint256 public immutable override minimumPot;
     uint256 public immutable override burnRate;
+    uint256 public immutable override joinAmount;
     INativeSwap public immutable override nativeSwap;
     IRandomOracle public immutable override randomOracle;
 
-    uint256 public override rewardSnapshot;
+    uint256 public override rewardSnapshot = 1 << 128;
     uint256 public override unclaimedInterest;
     uint256 public override unclaimedWinPrize;
-    address[] private _userList;
+    uint256 public override interestReceiverLength;
+    uint64 public override roundId = 1;
+    mapping(uint256 id => address[] users) private _roundUsers;
     mapping(address user => UserInfo) private _userInfoMap;
 
     constructor(
         IERC20 token_,
         uint256 minimumPot_,
         uint256 burnRate_,
+        uint256 joinAmount_,
         INativeSwap nativeSwap_,
         IRandomOracle randomOracle_
     ) Ownable(msg.sender) {
         token = token_;
         minimumPot = minimumPot_;
         burnRate = burnRate_;
+        joinAmount = joinAmount_;
         nativeSwap = nativeSwap_;
         randomOracle = randomOracle_;
     }
 
-    function totalUsers() external view returns (uint256) {
-        return _userList.length;
+    function totalUsers(uint256 id) external view returns (uint256) {
+        return _roundUsers[id].length;
     }
 
-    function getAllUsers() external view returns (address[] memory) {
-        return _userList;
+    function getAllUsers(uint256 id) external view returns (address[] memory) {
+        return _roundUsers[id];
     }
 
-    function getUsers(uint256 start, uint256 end) external view returns (address[] memory) {
+    function getUser(uint256 id, uint256 position) external view returns (address) {
+        return _roundUsers[id][position];
+    }
+
+    function getUsers(uint256 id, uint256 start, uint256 end) external view returns (address[] memory) {
         address[] memory users = new address[](end - start);
         for (uint256 i = start; i < end; ++i) {
             unchecked {
-                users[i - start] = _userList[i];
+                users[i - start] = _roundUsers[id][i];
             }
         }
         return users;
@@ -71,47 +80,40 @@ contract Treasury is Ownable, ITreasury {
         return 0;
     }
 
-    function distribute(uint256 minOut) external {
-        uint256 interest;
-        unchecked {
-            interest = address(this).balance - unclaimedWinPrize;
-        }
-
-        uint256 out = nativeSwap.swapFromNative{value: interest}(minOut);
+    function distribute(uint256 minOut) external payable {
+        uint256 out = nativeSwap.swapFromNative{value: msg.value}(minOut);
         if (out == 0) return;
 
         unclaimedInterest += out;
-        rewardSnapshot += (out << 128) / _userList.length;
+        rewardSnapshot += (out << 128) / interestReceiverLength;
 
         emit Distribute(out, rewardSnapshot);
     }
 
-    function selectWinner(uint256 minOut) external returns (address winner) {
-        uint256 thisBalance = token.balanceOf(address(this));
-        uint256 pot;
+    function currentPot() public view returns (uint256) {
         unchecked {
-            pot = thisBalance - unclaimedInterest;
+            return address(this).balance - unclaimedWinPrize;
         }
+    }
+
+    function selectWinner() external returns (address winner) {
+        uint256 pot = currentPot();
         if (pot < minimumPot) revert InsufficientPot();
 
-        uint256 total = _userList.length;
+        uint64 currentRoundId = roundId;
+        uint256 total = _roundUsers[currentRoundId].length;
         uint256 rand = randomOracle.getRandomNumber();
         uint256 winnerIndex = rand % total;
-        winner = _userList[winnerIndex];
+        winner = _roundUsers[currentRoundId][winnerIndex];
 
-        uint256 burnAmount;
+        _userInfoMap[winner].winAmount += SafeCast.toUint128(pot);
+
         unchecked {
-            burnAmount = pot * burnRate / _RATE_PRECISION;
-            token.safeTransfer(_BURN_ADDRESS, burnAmount);
-            pot -= burnAmount;
+            unclaimedWinPrize += pot;
+            roundId = currentRoundId + 1;
         }
 
-        token.approve(address(nativeSwap), pot);
-        uint256 out = nativeSwap.swapToNative(pot, minOut);
-        _userInfoMap[winner].winAmount += SafeCast.toUint128(out);
-        unclaimedWinPrize += out;
-
-        emit Win(winner, out, burnAmount);
+        emit Win(currentRoundId, winner, pot);
     }
 
     function claimInterest(address user) public {
@@ -141,39 +143,59 @@ contract Treasury is Ownable, ITreasury {
     }
 
     function isRegistered(address user) public view returns (bool) {
-        return _userInfoMap[user].registered;
+        return _userInfoMap[user].snapshot > 0;
     }
 
     function getUserInfo(address user) external view returns (UserInfo memory) {
         return _userInfoMap[user];
     }
 
-    function register(address user) external onlyOwner {
-        if (isRegistered(user)) revert UserAlreadyRegistered();
+    function join(address user, uint256 minOut) external {
+        uint64 currentRoundId = roundId;
+        if (_userInfoMap[user].lastParticipatedRoundId == currentRoundId) revert AlreadyJoined();
 
-        UserInfo storage userInfo = _userInfoMap[user];
-        userInfo.registered = true;
-        userInfo.position = uint64(_userList.length);
-        userInfo.snapshot = rewardSnapshot;
+        token.safeTransferFrom(user, address(this), joinAmount);
 
-        _userList.push(user);
+        uint256 burnAmount;
+        uint256 swapAmount;
+        unchecked {
+            burnAmount = joinAmount * burnRate / _RATE_PRECISION;
+            token.safeTransfer(_BURN_ADDRESS, burnAmount);
+            swapAmount = joinAmount - burnAmount;
+        }
 
-        emit Register(user);
+        _userInfoMap[user].lastParticipatedRoundId = currentRoundId;
+        uint64 index = uint64(_roundUsers[currentRoundId].length);
+        _userInfoMap[user].index = index;
+        _roundUsers[currentRoundId].push(user);
+
+        token.approve(address(nativeSwap), swapAmount);
+        nativeSwap.swapToNative(swapAmount, minOut);
+
+        emit Join(user, currentRoundId, index);
     }
 
-    function unregister(address user) external onlyOwner {
-        if (!isRegistered(user)) revert UnregisteredUser();
-        claimInterest(user);
+    function register(address receiver) external onlyOwner {
+        if (isRegistered(receiver)) revert ReceiverAlreadyRegistered();
 
-        UserInfo storage userInfo = _userInfoMap[user];
-        uint256 position = userInfo.position;
         unchecked {
-            _userList[position] = _userList[_userList.length - 1];
+            interestReceiverLength++;
         }
-        _userList.pop();
-        userInfo.registered = false;
+        _userInfoMap[receiver].snapshot = rewardSnapshot;
 
-        emit Unregister(user);
+        emit Register(receiver);
+    }
+
+    function unregister(address receiver) external onlyOwner {
+        if (!isRegistered(receiver)) revert UnregisteredReceiver();
+        claimInterest(receiver);
+
+        unchecked {
+            interestReceiverLength--;
+        }
+        _userInfoMap[receiver].snapshot = 0;
+
+        emit Unregister(receiver);
     }
 
     receive() external payable {}

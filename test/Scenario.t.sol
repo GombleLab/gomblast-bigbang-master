@@ -19,7 +19,7 @@ contract ScenarioTest is Test {
     function setUp() public {
         token = new MockToken("GOMBLAST", "$GBLST");
         swap = new MockSwap(address(token), 10 * 1e18);
-        treasury = new Treasury(token, 1 ether, 20 * 10000, swap, new MockRandomOracle());
+        treasury = new Treasury(token, 0.5 ether, 20 * 10000, 2 ether, swap, new MockRandomOracle());
 
         vm.deal(address(this), 100 ether);
         vm.deal(address(swap), 100 ether);
@@ -30,12 +30,13 @@ contract ScenarioTest is Test {
             address user = address(uint160(1000 + i));
             treasury.register(user);
             users.push(user);
+            token.mint(user, 100 ether);
+            vm.prank(user);
+            token.approve(address(treasury), type(uint256).max);
         }
     }
 
     function testScenario1() public {
-        payable(address(treasury)).transfer(1 ether);
-
         uint256[] memory beforeUserBalances = new uint256[](users.length);
         for (uint256 i; i < beforeUserBalances.length; ++i) {
             beforeUserBalances[i] = token.balanceOf(users[i]);
@@ -43,7 +44,7 @@ contract ScenarioTest is Test {
         uint256 beforeUnclaimedInterest = treasury.unclaimedInterest();
 
         uint256 expectedSwapAmount = 10 ether;
-        treasury.distribute(0);
+        treasury.distribute{value: 1 ether}(0);
 
         assertEq(treasury.unclaimedInterest(), beforeUnclaimedInterest + expectedSwapAmount, "UNCLAIMED_INTEREST");
 
@@ -63,33 +64,45 @@ contract ScenarioTest is Test {
     function testScenario2() public {
         token.mint(address(treasury), 10 ether);
 
+        uint256 roundId = treasury.roundId();
+
         uint256[] memory beforeUserBalances = new uint256[](users.length);
         for (uint256 i; i < beforeUserBalances.length; ++i) {
             beforeUserBalances[i] = users[i].balance;
+            uint256 pot = treasury.currentPot();
+            uint256 burnBalance = token.balanceOf(address(0xdead));
+            uint256 beforeTotalUsers = treasury.totalUsers(roundId);
+            treasury.join(users[i], 0);
+            assertEq(treasury.currentPot(), pot + 0.16 ether, "POT");
+            assertEq(token.balanceOf(address(0xdead)), burnBalance + 0.4 ether, "BURNT_AMOUNT");
+            assertEq(treasury.totalUsers(roundId), beforeTotalUsers + 1, "TOTAL_USERS");
+            assertEq(treasury.getUserInfo(users[i]).lastParticipatedRoundId, roundId, "LAST_PARTICIPATED_ROUND_ID");
+            uint256 index = treasury.getUserInfo(users[i]).index;
+            assertEq(treasury.getUser(roundId, index), users[i], "USER");
         }
-        uint256 beforeBurnAccountBalance = token.balanceOf(address(0xdead));
         uint256 beforeUnclaimedWinPrize = treasury.unclaimedWinPrize();
 
-        uint256 expectedSwapAmount = 1 ether;
+        uint256 expectedSwapAmount = 0.8 ether;
 
-        address winner = treasury.selectWinner(0);
+        address winner = treasury.selectWinner();
 
         assertEq(treasury.unclaimedWinPrize(), beforeUnclaimedWinPrize + expectedSwapAmount, "UNCLAIMED_WIN_PRIZE");
 
         for (uint256 i; i < beforeUserBalances.length; ++i) {
             if (users[i] == winner) {
-                uint256 winAmount = expectedSwapAmount * 8 / 10;
                 assertEq(users[i].balance, beforeUserBalances[i], "WINNER_BALANCE_0");
-                assertEq(treasury.getUserInfo(users[i]).winAmount, winAmount, "WINNER_WIN_AMOUNT_0");
+                assertEq(treasury.getUserInfo(users[i]).winAmount, expectedSwapAmount, "WINNER_WIN_AMOUNT_0");
                 treasury.claimWinPrize(users[i]);
-                assertEq(users[i].balance, beforeUserBalances[i] + winAmount, "WINNER_BALANCE_1");
+                assertEq(users[i].balance, beforeUserBalances[i] + expectedSwapAmount, "WINNER_BALANCE_1");
                 assertEq(treasury.getUserInfo(users[i]).winAmount, 0, "WINNER_WIN_AMOUNT_1");
             } else {
                 assertEq(users[i].balance, beforeUserBalances[i], "LOSER_BALANCE");
             }
         }
-        assertEq(token.balanceOf(address(0xdead)), beforeBurnAccountBalance + 2 ether, "BURNT_AMOUNT");
 
+        assertEq(treasury.roundId(), roundId + 1, "ROUND_ID");
         assertEq(treasury.unclaimedWinPrize(), 0, "UNCLAIMED_WIN_PRIZE");
+        assertEq(treasury.getAllUsers(roundId + 1).length, 0, "ALL_USERS");
+        assertEq(treasury.totalUsers(roundId + 1), 0, "TOTAL_USERS");
     }
 }
