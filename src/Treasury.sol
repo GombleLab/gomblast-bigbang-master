@@ -21,6 +21,7 @@ contract Treasury is Ownable, ITreasury {
     INativeSwap public immutable override nativeSwap;
     IRandomOracle public immutable override randomOracle;
 
+    uint256 public override currentPot;
     uint256 public override rewardSnapshot = 1 << 128;
     uint256 public override unclaimedInterest;
     uint256 public override unclaimedWinPrize;
@@ -90,14 +91,8 @@ contract Treasury is Ownable, ITreasury {
         emit Distribute(out, rewardSnapshot);
     }
 
-    function currentPot() public view returns (uint256) {
-        unchecked {
-            return address(this).balance - unclaimedWinPrize;
-        }
-    }
-
     function selectWinner() external returns (address winner) {
-        uint256 pot = currentPot();
+        uint256 pot = currentPot;
         if (pot < minimumPot) revert InsufficientPot();
 
         uint64 currentRoundId = roundId;
@@ -111,6 +106,7 @@ contract Treasury is Ownable, ITreasury {
         unchecked {
             unclaimedWinPrize += pot;
             roundId = currentRoundId + 1;
+            currentPot = 0;
         }
 
         emit Win(currentRoundId, winner, pot);
@@ -172,7 +168,10 @@ contract Treasury is Ownable, ITreasury {
         _roundUsers[currentRoundId].push(user);
 
         token.approve(address(nativeSwap), swapAmount);
-        nativeSwap.swapToNative(swapAmount, minOut);
+        uint256 out = nativeSwap.swapToNative(swapAmount, minOut);
+        unchecked {
+            currentPot += out;
+        }
 
         emit Join(user, currentRoundId, index);
     }
@@ -198,6 +197,19 @@ contract Treasury is Ownable, ITreasury {
         _userInfoMap[receiver].snapshot = 0;
 
         emit Unregister(receiver);
+    }
+
+    function collectable() public view returns (uint256) {
+        unchecked {
+            return address(this).balance - currentPot;
+        }
+    }
+
+    function collect(address recipient) external onlyOwner {
+        uint256 amount = collectable();
+        (bool success,) = recipient.call{value: amount}("");
+        if (!success) revert NativeTransferFailed();
+        emit Collect(recipient, amount);
     }
 
     receive() external payable {}

@@ -15,6 +15,7 @@ interface ITreasury {
     event Win(uint64 indexed roundId, address indexed winner, uint256 winAmount);
     event ClaimWinPrize(address indexed user, uint256 amount);
     event Join(address indexed user, uint64 indexed roundId, uint64 index);
+    event Collect(address recipient, uint256 amount);
 
     error ReceiverAlreadyRegistered();
     error UnregisteredReceiver();
@@ -80,4 +81,8 @@ interface ITreasury {
     function register(address receiver) external;
 
     function unregister(address receiver) external;
+
+    function collectable() external view returns (uint256);
+
+    function collect(address recipient) external;
 }
