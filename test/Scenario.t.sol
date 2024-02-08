@@ -72,6 +72,7 @@ contract ScenarioTest is Test {
             uint256 pot = treasury.currentPot();
             uint256 burnBalance = token.balanceOf(address(0xdead));
             uint256 beforeTotalUsers = treasury.totalUsers(roundId);
+            vm.prank(users[i]);
             treasury.join(users[i], 0);
             assertEq(treasury.currentPot(), pot + 0.16 ether, "POT");
             assertEq(token.balanceOf(address(0xdead)), burnBalance + 0.4 ether, "BURNT_AMOUNT");
