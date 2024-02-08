@@ -151,6 +151,8 @@ contract Treasury is Ownable, ITreasury {
     }
 
     function join(address user, uint256 minOut) external {
+        // @warning This function is vulnerable to sandwich attack
+        //          We have to add random weight depends on the participated amount or divide swap logic from user action.
         uint64 currentRoundId = roundId;
         if (_userInfoMap[user].lastParticipatedRoundId == currentRoundId) revert AlreadyJoined();
 
