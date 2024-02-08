@@ -154,7 +154,7 @@ contract Treasury is Ownable, ITreasury {
         uint64 currentRoundId = roundId;
         if (_userInfoMap[user].lastParticipatedRoundId == currentRoundId) revert AlreadyJoined();
 
-        token.safeTransferFrom(user, address(this), joinAmount);
+        token.safeTransferFrom(msg.sender, address(this), joinAmount);
 
         uint256 burnAmount;
         uint256 swapAmount;
