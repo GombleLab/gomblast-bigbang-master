@@ -91,7 +91,7 @@ contract Treasury is Ownable, ITreasury {
         emit Distribute(out, rewardSnapshot);
     }
 
-    function selectWinner() external returns (address winner) {
+    function selectWinner(uint256 minOut) external onlyOwner returns (address winner) {
         uint256 pot = currentPot;
         if (pot < minimumPot) revert InsufficientPot();
 
@@ -101,15 +101,25 @@ contract Treasury is Ownable, ITreasury {
         uint256 winnerIndex = rand % total;
         winner = _roundUsers[currentRoundId][winnerIndex];
 
-        _userInfoMap[winner].winAmount += SafeCast.toUint128(pot);
+        uint256 burnAmount;
+        unchecked {
+            burnAmount = pot * burnRate / _RATE_PRECISION;
+            token.safeTransfer(_BURN_ADDRESS, burnAmount);
+            pot -= burnAmount;
+        }
+
+        token.approve(address(nativeSwap), pot);
+        uint256 out = nativeSwap.swapToNative(pot, minOut);
+
+        _userInfoMap[winner].winAmount += SafeCast.toUint128(out);
 
         unchecked {
-            unclaimedWinPrize += pot;
+            unclaimedWinPrize += out;
             roundId = currentRoundId + 1;
             currentPot = 0;
         }
 
-        emit Win(currentRoundId, winner, pot);
+        emit Win(currentRoundId, winner, out);
     }
 
     function claimInterest(address user) public {
@@ -146,31 +156,19 @@ contract Treasury is Ownable, ITreasury {
         return _userInfoMap[user];
     }
 
-    function join(address user, uint256 minOut) external {
-        // @warning This function is vulnerable to sandwich attack
-        //          We have to add random weight depends on the participated amount or divide swap logic from user action.
+    function join(address user) external {
         uint64 currentRoundId = roundId;
         if (_userInfoMap[user].lastParticipatedRoundId == currentRoundId) revert AlreadyJoined();
 
         token.safeTransferFrom(msg.sender, address(this), joinAmount);
-
-        uint256 burnAmount;
-        uint256 swapAmount;
-        unchecked {
-            burnAmount = joinAmount * burnRate / _RATE_PRECISION;
-            token.safeTransfer(_BURN_ADDRESS, burnAmount);
-            swapAmount = joinAmount - burnAmount;
-        }
 
         _userInfoMap[user].lastParticipatedRoundId = currentRoundId;
         uint64 index = uint64(_roundUsers[currentRoundId].length);
         _userInfoMap[user].index = index;
         _roundUsers[currentRoundId].push(user);
 
-        token.approve(address(nativeSwap), swapAmount);
-        uint256 out = nativeSwap.swapToNative(swapAmount, minOut);
         unchecked {
-            currentPot += out;
+            currentPot += joinAmount;
         }
 
         emit Join(user, currentRoundId, index);

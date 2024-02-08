@@ -70,13 +70,13 @@ interface ITreasury {
 
     function distribute(uint256 minOut) external payable;
 
-    function selectWinner() external returns (address winner);
+    function selectWinner(uint256 minOut) external returns (address winner);
 
     function claimInterest(address user) external;
 
     function claimWinPrize(address user) external;
 
-    function join(address user, uint256 minOut) external;
+    function join(address user) external;
 
     function register(address receiver) external;
 

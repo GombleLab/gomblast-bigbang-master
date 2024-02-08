@@ -70,31 +70,30 @@ contract ScenarioTest is Test {
         for (uint256 i; i < beforeUserBalances.length; ++i) {
             beforeUserBalances[i] = users[i].balance;
             uint256 pot = treasury.currentPot();
-            uint256 burnBalance = token.balanceOf(address(0xdead));
             uint256 beforeTotalUsers = treasury.totalUsers(roundId);
             vm.prank(users[i]);
-            treasury.join(users[i], 0);
-            assertEq(treasury.currentPot(), pot + 0.16 ether, "POT");
-            assertEq(token.balanceOf(address(0xdead)), burnBalance + 0.4 ether, "BURNT_AMOUNT");
+            treasury.join(users[i]);
+            assertEq(treasury.currentPot(), pot + 2 ether, "POT");
             assertEq(treasury.totalUsers(roundId), beforeTotalUsers + 1, "TOTAL_USERS");
             assertEq(treasury.getUserInfo(users[i]).lastParticipatedRoundId, roundId, "LAST_PARTICIPATED_ROUND_ID");
             uint256 index = treasury.getUserInfo(users[i]).index;
             assertEq(treasury.getUser(roundId, index), users[i], "USER");
         }
         uint256 beforeUnclaimedWinPrize = treasury.unclaimedWinPrize();
+        uint256 beforeBurnBalance = token.balanceOf(address(0xdead));
 
-        uint256 expectedSwapAmount = 0.8 ether;
+        uint256 expectedWinAmount = 0.8 ether;
 
-        address winner = treasury.selectWinner();
+        address winner = treasury.selectWinner(0);
 
-        assertEq(treasury.unclaimedWinPrize(), beforeUnclaimedWinPrize + expectedSwapAmount, "UNCLAIMED_WIN_PRIZE");
+        assertEq(treasury.unclaimedWinPrize(), beforeUnclaimedWinPrize + expectedWinAmount, "UNCLAIMED_WIN_PRIZE");
 
         for (uint256 i; i < beforeUserBalances.length; ++i) {
             if (users[i] == winner) {
                 assertEq(users[i].balance, beforeUserBalances[i], "WINNER_BALANCE_0");
-                assertEq(treasury.getUserInfo(users[i]).winAmount, expectedSwapAmount, "WINNER_WIN_AMOUNT_0");
+                assertEq(treasury.getUserInfo(users[i]).winAmount, expectedWinAmount, "WINNER_WIN_AMOUNT_0");
                 treasury.claimWinPrize(users[i]);
-                assertEq(users[i].balance, beforeUserBalances[i] + expectedSwapAmount, "WINNER_BALANCE_1");
+                assertEq(users[i].balance, beforeUserBalances[i] + expectedWinAmount, "WINNER_BALANCE_1");
                 assertEq(treasury.getUserInfo(users[i]).winAmount, 0, "WINNER_WIN_AMOUNT_1");
             } else {
                 assertEq(users[i].balance, beforeUserBalances[i], "LOSER_BALANCE");
@@ -105,5 +104,7 @@ contract ScenarioTest is Test {
         assertEq(treasury.unclaimedWinPrize(), 0, "UNCLAIMED_WIN_PRIZE");
         assertEq(treasury.getAllUsers(roundId + 1).length, 0, "ALL_USERS");
         assertEq(treasury.totalUsers(roundId + 1), 0, "TOTAL_USERS");
+        assertEq(token.balanceOf(address(0xdead)), beforeBurnBalance + 2 ether, "BURNT_AMOUNT");
+        assertEq(treasury.currentPot(), 0, "POT");
     }
 }
