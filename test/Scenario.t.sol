@@ -17,7 +17,7 @@ contract ScenarioTest is Test {
     address[] public users;
 
     function setUp() public {
-        token = new MockToken("GOMBLAST", "$GBLST");
+        token = new MockToken("GOMBLAST", "$GBLST", 18);
         swap = new MockSwap(address(token), 10 * 1e18);
         treasury = new Treasury(token, 0.5 ether, 20 * 10000, 2 ether, swap, new MockRandomOracle());
 
