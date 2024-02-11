@@ -10,6 +10,7 @@ import "./ISwapRouter.sol";
 interface IGamble {
     error AlreadyJoined();
     error InsufficientPot();
+    error InvalidSwap();
 
     event Join(address indexed user, uint256 indexed round, uint256 index);
     event SelectWinner(address indexed winner, uint256 indexed round, uint256 pot, uint256 winAmount);

@@ -108,9 +108,11 @@ contract Gamble is IGamble, Ownable2Step {
         entryToken.safeTransfer(_BURN_ADDRESS, burnAmount);
         entryToken.approve(address(swapRouter), swapAmount);
 
-        uint256 winAmount = rewardToken.balanceOf(address(this));
-        swapRouter.swap(address(entryToken), address(rewardToken), swapAmount, minOut);
-        winAmount = rewardToken.balanceOf(address(this)) - winAmount;
+        uint256 beforeBalance = rewardToken.balanceOf(address(this));
+        uint256 winAmount = swapRouter.swap(address(entryToken), address(rewardToken), swapAmount, minOut);
+        // @dev Assume that the return value is valid
+        //      We should check the real balance diff after the swap to avoid draining attack through `collect` function
+        if (rewardToken.balanceOf(address(this)) - beforeBalance < winAmount) revert InvalidSwap();
 
         unchecked {
             totalUnclaimedAmount += winAmount;
