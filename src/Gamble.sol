@@ -103,7 +103,11 @@ contract Gamble is IGamble, Ownable2Step {
         }
         entryToken.safeTransfer(_BURN_ADDRESS, burnAmount);
         entryToken.approve(address(swapRouter), swapAmount);
-        uint256 winAmount = swapRouter.swap(address(entryToken), address(rewardToken), swapAmount, minOut);
+
+        uint256 winAmount = rewardToken.balanceOf(address(this));
+        swapRouter.swap(address(entryToken), address(rewardToken), swapAmount, minOut);
+        winAmount = rewardToken.balanceOf(address(this)) - winAmount;
+
         unchecked {
             totalUnclaimedAmount += winAmount;
         }

@@ -50,7 +50,11 @@ contract Distributor is IDistributor, Ownable2Step {
     function distribute(address payment, uint256 amount, uint256 minOut) public {
         IERC20(payment).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(payment).approve(address(swapRouter), amount);
-        uint256 out = swapRouter.swap(payment, address(rewardToken), amount, minOut);
+
+        uint256 out = rewardToken.balanceOf(address(this));
+        swapRouter.swap(payment, address(rewardToken), amount, minOut);
+        out = rewardToken.balanceOf(address(this)) - out;
+
         rewardSnapshot += out * _PRECISION / totalReceivers;
         emit Distribute(payment, amount, out);
     }
