@@ -18,7 +18,7 @@ interface IGamble {
 
     struct UserInfo {
         uint64 lastParticipatedRoundId;
-        uint64 index;
+        uint64 currentIndex;
         uint128 winAmount;
     }
 

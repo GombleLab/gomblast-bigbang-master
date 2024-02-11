@@ -64,7 +64,7 @@ contract GambleTest is Test {
         assertEq(gamble.getUser(round, 0), users[0], "USER");
         IGamble.UserInfo memory userInfo = gamble.getUserInfo(users[0]);
         assertEq(userInfo.lastParticipatedRoundId, round, "LAST_PARTICIPATED_ROUND_ID");
-        assertEq(userInfo.index, 0, "INDEX");
+        assertEq(userInfo.currentIndex, 0, "INDEX");
         assertEq(userInfo.winAmount, 0, "WIN_AMOUNT");
         address[] memory allUsers = gamble.getAllUsers(round);
         assertEq(allUsers.length, 1, "ALL_USERS_LENGTH");
@@ -100,7 +100,7 @@ contract GambleTest is Test {
             assertEq(gamble.getUser(round, i), users[i], "USER");
             IGamble.UserInfo memory userInfo = gamble.getUserInfo(users[i]);
             assertEq(userInfo.lastParticipatedRoundId, round, "LAST_PARTICIPATED_ROUND_ID");
-            assertEq(userInfo.index, i, "INDEX");
+            assertEq(userInfo.currentIndex, i, "INDEX");
             assertEq(userInfo.winAmount, 0, "WIN_AMOUNT");
         }
     }

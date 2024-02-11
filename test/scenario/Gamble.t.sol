@@ -64,7 +64,7 @@ contract GambleScenarioTest is Test {
             assertEq(gamble.currentPot(), pot + 2 ether, "POT");
             assertEq(gamble.totalUsers(round), beforeTotalUsers + 1, "TOTAL_USERS");
             assertEq(gamble.getUserInfo(users[i]).lastParticipatedRoundId, round, "LAST_PARTICIPATED_ROUND_ID");
-            uint256 index = gamble.getUserInfo(users[i]).index;
+            uint256 index = gamble.getUserInfo(users[i]).currentIndex;
             assertEq(gamble.getUser(round, index), users[i], "USER");
         }
         uint256 beforeTotalUnclaimedAmount = gamble.totalUnclaimedAmount();

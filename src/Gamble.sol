@@ -86,7 +86,7 @@ contract Gamble is IGamble, Ownable2Step {
         }
         uint256 length = _roundUsers[round].length;
         _userInfoMap[user].lastParticipatedRoundId = uint64(round);
-        _userInfoMap[user].index = uint64(length);
+        _userInfoMap[user].currentIndex = uint64(length);
         _roundUsers[round].push(user);
         emit Join(user, round, length);
     }
