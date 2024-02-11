@@ -14,6 +14,7 @@ contract GambleScenarioTest is Test {
     MockToken public entryToken;
     MockToken public rewardToken;
     ISwapRouter public swapRouter;
+    IRandomOracle public randomOracle;
     IGamble public gamble;
 
     address[] public users;
@@ -23,13 +24,14 @@ contract GambleScenarioTest is Test {
         rewardToken = new MockToken("USD Tether", "USDT", 6);
 
         swapRouter = new MockSwapRouter(1e17);
+        randomOracle = new MockRandomOracle();
 
         gamble = new Gamble(
             address(this),
             IERC20(entryToken),
             IERC20(rewardToken),
             swapRouter,
-            new MockRandomOracle(),
+            randomOracle,
             20 * 10000,
             2 ether,
             4 ether
@@ -72,6 +74,7 @@ contract GambleScenarioTest is Test {
 
         uint256 expectedWinAmount = 0.8 * 1e6;
 
+        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
         address winner = gamble.selectWinner(0);
 
         assertEq(gamble.totalUnclaimedAmount(), beforeTotalUnclaimedAmount + expectedWinAmount, "TOTAL_UNCLAIMED");

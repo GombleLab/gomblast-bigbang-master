@@ -117,8 +117,9 @@ contract Gamble is IGamble, Ownable2Step {
         unchecked {
             totalUnclaimedAmount += winAmount;
         }
-        uint256 random = randomOracle.getRandomNumber();
-        uint256 index = random % length;
+        uint256 index = randomOracle.getRandomNumber(round);
+        if (index >= length) revert InvalidRandomValue();
+
         winner = _roundUsers[round][index];
         unchecked {
             _userInfoMap[winner].winAmount += uint128(winAmount);

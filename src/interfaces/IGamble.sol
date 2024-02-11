@@ -11,6 +11,7 @@ interface IGamble {
     error AlreadyJoined();
     error InsufficientPot();
     error InvalidSwap();
+    error InvalidRandomValue();
 
     event Join(address indexed user, uint256 indexed round, uint256 index);
     event SelectWinner(address indexed winner, uint256 indexed round, uint256 pot, uint256 winAmount);

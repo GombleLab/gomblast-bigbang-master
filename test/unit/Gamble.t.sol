@@ -15,6 +15,7 @@ contract GambleTest is Test {
     MockToken public entryToken;
     MockToken public rewardToken;
     ISwapRouter public swapRouter;
+    IRandomOracle public randomOracle;
     IGamble public gamble;
 
     address[] public users;
@@ -24,13 +25,14 @@ contract GambleTest is Test {
         rewardToken = new MockToken("USD Tether", "USDT", 6);
 
         swapRouter = new MockSwapRouter(1e17);
+        randomOracle = new MockRandomOracle();
 
         gamble = new Gamble(
             address(this),
             IERC20(entryToken),
             IERC20(rewardToken),
             swapRouter,
-            new MockRandomOracle(),
+            randomOracle,
             20 * 10000,
             10 ether,
             20 ether
@@ -118,6 +120,8 @@ contract GambleTest is Test {
         gamble.join(users[3]);
         gamble.join(users[4]);
 
+        uint256 round = gamble.currentRound();
+        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
         address winner = gamble.selectWinner(0);
 
         uint256 beforeBalance = entryToken.balanceOf(address(this));
@@ -145,6 +149,7 @@ contract GambleTest is Test {
         uint256 beforeGambleRewardBalance = rewardToken.balanceOf(address(gamble));
         uint256 beforeBurnAccountBalance = entryToken.balanceOf(address(0xdead));
 
+        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
         vm.expectEmit(false, true, true, true, address(gamble));
         emit IGamble.SelectWinner(address(0), round, pot, 5 * 0.8 * 1e6);
         address winner = gamble.selectWinner(0);
@@ -173,6 +178,8 @@ contract GambleTest is Test {
         vm.prank(users[0]);
         gamble.join(users[0]);
 
+        uint256 round = gamble.currentRound();
+        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
         vm.expectRevert(abi.encodeWithSelector(IGamble.InsufficientPot.selector));
         gamble.selectWinner(0);
     }
@@ -181,6 +188,8 @@ contract GambleTest is Test {
         gamble.join(users[0]);
         gamble.join(users[1]);
         gamble.join(users[2]);
+        uint256 round = gamble.currentRound();
+        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
         address winner = gamble.selectWinner(0);
 
         uint256 beforeUserBalance = rewardToken.balanceOf(winner);
