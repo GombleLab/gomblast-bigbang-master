@@ -52,6 +52,8 @@ interface IGamble {
 
     function getUserInfo(address user) external view returns (UserInfo memory);
 
+    function joinWithPermit(address user, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
+
     function join(address user) external;
 
     function selectWinner(uint256 minOut) external returns (address winner);

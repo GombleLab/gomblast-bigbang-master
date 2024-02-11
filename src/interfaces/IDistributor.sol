@@ -29,6 +29,16 @@ interface IDistributor {
 
     function claimable(address user) external view returns (uint256);
 
+    function distributeWithPermit(
+        address payment,
+        uint256 amount,
+        uint256 minOut,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
     function distribute(address payment, uint256 amount, uint256 minOut) external;
 
     function claim(address user) external;

@@ -70,7 +70,12 @@ contract Gamble is IGamble, Ownable2Step {
         return _userInfoMap[user];
     }
 
-    function join(address user) external {
+    function joinWithPermit(address user, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        IERC20Permit(address(entryToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+        join(user);
+    }
+
+    function join(address user) public {
         uint256 round = currentRound;
         if (_userInfoMap[user].lastParticipatedRoundId == round) revert AlreadyJoined();
         uint256 amount = joinAmount;
