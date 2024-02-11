@@ -3,17 +3,18 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin-contracts/contracts/access/Ownable.sol";
 
 import "./interfaces/ISwapRouter.sol";
 
-contract MockSwapRouter is ISwapRouter {
+contract MockSwapRouter is ISwapRouter, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 private constant _PRECISION = 1e18;
 
     uint256 public swapRate;
 
-    constructor(uint256 initialRate_) {
+    constructor(address owner_, uint256 initialRate_) Ownable(owner_) {
         swapRate = initialRate_;
     }
 
@@ -30,7 +31,7 @@ contract MockSwapRouter is ISwapRouter {
         IERC20(to).safeTransfer(msg.sender, outAmount);
     }
 
-    function setSwapRate(uint256 newRate) external {
+    function setSwapRate(uint256 newRate) external onlyOwner {
         swapRate = newRate;
     }
 }

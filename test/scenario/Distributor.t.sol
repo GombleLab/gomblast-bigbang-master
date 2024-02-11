@@ -17,10 +17,10 @@ contract DistributorScenarioTest is Test {
     address[] public users;
 
     function setUp() public {
-        distributionToken = new MockToken("USD Tether", "Token", 6);
-        rewardToken = new MockToken("GOMBLAST", "$GBLST", 18);
+        distributionToken = new MockToken(address(this), "USD Tether", "Token", 6);
+        rewardToken = new MockToken(address(this), "GOMBLAST", "$GBLST", 18);
 
-        swapRouter = new MockSwapRouter(1e19);
+        swapRouter = new MockSwapRouter(address(this), 1e19);
 
         distributor = new Distributor(address(this), rewardToken, swapRouter);
 

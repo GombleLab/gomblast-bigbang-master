@@ -20,11 +20,11 @@ contract GambleScenarioTest is Test {
     address[] public users;
 
     function setUp() public {
-        entryToken = new MockToken("GOMBLAST", "$GBLST", 18);
-        rewardToken = new MockToken("USD Tether", "USDT", 6);
+        entryToken = new MockToken(address(this), "GOMBLAST", "$GBLST", 18);
+        rewardToken = new MockToken(address(this), "USD Tether", "USDT", 6);
 
-        swapRouter = new MockSwapRouter(1e17);
-        randomOracle = new MockRandomOracle();
+        swapRouter = new MockSwapRouter(address(this), 1e17);
+        randomOracle = new MockRandomOracle(address(this));
 
         gamble = new Gamble(
             address(this),
