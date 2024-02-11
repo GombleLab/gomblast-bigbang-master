@@ -20,6 +20,7 @@ contract Distributor is IDistributor, Ownable2Step {
     mapping(address => uint256) public override getUserSnapshot;
 
     constructor(address owner_, IERC20 rewardToken_, ISwapRouter swapRouter_) Ownable(owner_) {
+        // @dev Assume that all the parameters are valid
         rewardToken = rewardToken_;
         swapRouter = swapRouter_;
     }

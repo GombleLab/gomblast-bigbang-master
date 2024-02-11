@@ -36,6 +36,7 @@ contract Gamble is IGamble, Ownable2Step {
         uint256 joinAmount_,
         uint256 minimumPot_
     ) Ownable(owner_) {
+        // @dev Assume that all the parameters are valid
         entryToken = entryToken_;
         rewardToken = rewardToken_;
         swapRouter = swapRouter_;
@@ -70,8 +71,8 @@ contract Gamble is IGamble, Ownable2Step {
         return _userInfoMap[user];
     }
 
-    function joinWithPermit(address user, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
-        IERC20Permit(address(entryToken)).permit(msg.sender, address(this), amount, deadline, v, r, s);
+    function joinWithPermit(address user, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        IERC20Permit(address(entryToken)).permit(msg.sender, address(this), joinAmount, deadline, v, r, s);
         join(user);
     }
 
