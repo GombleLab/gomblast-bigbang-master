@@ -103,6 +103,7 @@ contract Gamble is IGamble, Ownable2Step {
             burnAmount = pot * burnRate / _RATE_PRECISION;
             swapAmount = pot - burnAmount;
             currentRound = uint64(round + 1);
+            currentPot = 0;
         }
         entryToken.safeTransfer(_BURN_ADDRESS, burnAmount);
         entryToken.approve(address(swapRouter), swapAmount);
@@ -114,7 +115,6 @@ contract Gamble is IGamble, Ownable2Step {
         unchecked {
             totalUnclaimedAmount += winAmount;
         }
-        currentPot = 0;
         uint256 random = randomOracle.getRandomNumber();
         uint256 index = random % length;
         winner = _roundUsers[round][index];
