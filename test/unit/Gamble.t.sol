@@ -111,6 +111,26 @@ contract GambleTest is Test {
         gamble.join(users[0]);
     }
 
+    function testJoinWinAmountShouldRemain() public {
+        gamble.join(users[0]);
+        gamble.join(users[1]);
+        gamble.join(users[2]);
+        gamble.join(users[3]);
+        gamble.join(users[4]);
+
+        address winner = gamble.selectWinner(0);
+
+        uint256 beforeBalance = entryToken.balanceOf(address(this));
+        uint256 beforeGambleBalance = entryToken.balanceOf(address(gamble));
+        uint256 beforeUserWinAmount = gamble.getUserInfo(winner).winAmount;
+
+        gamble.join(winner);
+
+        assertEq(entryToken.balanceOf(address(this)), beforeBalance - gamble.joinAmount(), "TOKEN_BALANCE");
+        assertEq(entryToken.balanceOf(address(gamble)), beforeGambleBalance + gamble.joinAmount(), "GAMBLE_BALANCE");
+        assertEq(gamble.getUserInfo(winner).winAmount, beforeUserWinAmount, "WIN_AMOUNT");
+    }
+
     function testSelectWinner() public {
         uint256[] memory beforeUserRewardBalances = new uint256[](users.length);
         for (uint256 i; i < users.length; ++i) {

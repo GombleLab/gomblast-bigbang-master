@@ -84,9 +84,11 @@ contract Gamble is IGamble, Ownable2Step {
         unchecked {
             currentPot += amount;
         }
-        _userInfoMap[user] = UserInfo(uint64(round), uint64(_roundUsers[round].length), 0);
+        uint256 length = _roundUsers[round].length;
+        _userInfoMap[user].lastParticipatedRoundId = uint64(round);
+        _userInfoMap[user].index = uint64(length);
         _roundUsers[round].push(user);
-        emit Join(user, round, _roundUsers[round].length - 1);
+        emit Join(user, round, length);
     }
 
     function selectWinner(uint256 minOut) external onlyOwner returns (address winner) {
