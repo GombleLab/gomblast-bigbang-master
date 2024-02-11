@@ -14,7 +14,7 @@ import "../../src/MockRandomOracle.sol";
 contract GambleTest is Test {
     MockToken public entryToken;
     MockToken public rewardToken;
-    ISwapRouter public swapRouter;
+    MockSwapRouter public swapRouter;
     IRandomOracle public randomOracle;
     IGamble public gamble;
 
@@ -24,7 +24,8 @@ contract GambleTest is Test {
         entryToken = new MockToken(address(this), "GOMBLAST", "$GBLST", 18);
         rewardToken = new MockToken(address(this), "USD Tether", "USDT", 6);
 
-        swapRouter = new MockSwapRouter(address(this), 1e17);
+        swapRouter = new MockSwapRouter(address(this));
+        swapRouter.setSwapRate(address(entryToken), address(rewardToken), 1e17);
         randomOracle = new MockRandomOracle(address(this));
 
         gamble = new Gamble(

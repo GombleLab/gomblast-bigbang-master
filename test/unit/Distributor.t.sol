@@ -12,7 +12,7 @@ import "../../src/Distributor.sol";
 contract DistributorTest is Test {
     MockToken public distributionToken;
     MockToken public rewardToken;
-    ISwapRouter public swapRouter;
+    MockSwapRouter public swapRouter;
     IDistributor public distributor;
     address[] public users;
 
@@ -20,7 +20,8 @@ contract DistributorTest is Test {
         distributionToken = new MockToken(address(this), "USD Tether", "Token", 6);
         rewardToken = new MockToken(address(this), "GOMBLAST", "$GBLST", 18);
 
-        swapRouter = new MockSwapRouter(address(this), 1e18);
+        swapRouter = new MockSwapRouter(address(this));
+        swapRouter.setSwapRate(address(distributionToken), address(rewardToken), 1e18);
 
         distributor = new Distributor(address(this), rewardToken, swapRouter);
 
