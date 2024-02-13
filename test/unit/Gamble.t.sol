@@ -15,7 +15,7 @@ contract GambleTest is Test {
     MockToken public entryToken;
     MockToken public rewardToken;
     MockSwapRouter public swapRouter;
-    IRandomOracle public randomOracle;
+    MockRandomOracle public randomOracle;
     IGamble public gamble;
 
     address[] public users;
@@ -122,8 +122,9 @@ contract GambleTest is Test {
         gamble.join(users[4]);
 
         uint256 round = gamble.currentRound();
-        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
+        randomOracle.setRandomNumber(round, 2);
         address winner = gamble.selectWinner(0);
+        assertEq(winner, users[2], "WINNER");
 
         uint256 beforeBalance = entryToken.balanceOf(address(this));
         uint256 beforeGambleBalance = entryToken.balanceOf(address(gamble));
@@ -150,10 +151,11 @@ contract GambleTest is Test {
         uint256 beforeGambleRewardBalance = rewardToken.balanceOf(address(gamble));
         uint256 beforeBurnAccountBalance = entryToken.balanceOf(address(0xdead));
 
-        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
+        randomOracle.setRandomNumber(round, 0);
         vm.expectEmit(false, true, true, true, address(gamble));
         emit IGamble.SelectWinner(address(0), round, pot, 5 * 0.8 * 1e6);
         address winner = gamble.selectWinner(0);
+        assertEq(winner, users[0], "WINNER");
 
         assertEq(gamble.currentRound(), round + 1, "ROUND");
         assertEq(gamble.currentPot(), 0, "POT");
@@ -180,7 +182,7 @@ contract GambleTest is Test {
         gamble.join(users[0]);
 
         uint256 round = gamble.currentRound();
-        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
+        randomOracle.setRandomNumber(round, 0);
         vm.expectRevert(abi.encodeWithSelector(IGamble.InsufficientPot.selector));
         gamble.selectWinner(0);
     }
@@ -190,8 +192,9 @@ contract GambleTest is Test {
         gamble.join(users[1]);
         gamble.join(users[2]);
         uint256 round = gamble.currentRound();
-        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
+        randomOracle.setRandomNumber(round, 0);
         address winner = gamble.selectWinner(0);
+        assertEq(winner, users[0], "WINNER");
 
         uint256 beforeUserBalance = rewardToken.balanceOf(winner);
         uint256 beforeGambleBalance = rewardToken.balanceOf(address(gamble));

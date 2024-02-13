@@ -21,11 +21,11 @@ contract GambleScript is Script {
         console.log("Current Round:", round);
 
         uint256[] memory privateKeys = new uint256[](5);
-        privateKeys[0] = vm.envUint("USER1");
-        privateKeys[1] = vm.envUint("USER2");
-        privateKeys[2] = vm.envUint("USER3");
-        privateKeys[3] = vm.envUint("USER4");
-        privateKeys[4] = vm.envUint("USER5");
+        privateKeys[0] = vm.envUint("USER0");
+        privateKeys[1] = vm.envUint("USER1");
+        privateKeys[2] = vm.envUint("USER2");
+        privateKeys[3] = vm.envUint("USER3");
+        privateKeys[4] = vm.envUint("USER4");
 
         uint256 amount = gamble.joinAmount();
         for (uint256 i; i < privateKeys.length; ++i) {
@@ -39,7 +39,7 @@ contract GambleScript is Script {
 
         uint256 pk = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(pk);
-        oracle.setRandomNumber(round, privateKeys.length - 1);
+        oracle.setRandomNumber(round, 2);
 
         address winner = gamble.selectWinner(0);
         vm.stopBroadcast();

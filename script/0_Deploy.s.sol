@@ -45,11 +45,11 @@ contract DeployScript is Script {
         console.log("gamble", address(gamble));
 
         address[] memory users = new address[](5);
-        users[0] = vm.addr(vm.envUint("USER1"));
-        users[1] = vm.addr(vm.envUint("USER2"));
-        users[2] = vm.addr(vm.envUint("USER3"));
-        users[3] = vm.addr(vm.envUint("USER4"));
-        users[4] = vm.addr(vm.envUint("USER5"));
+        users[0] = vm.addr(vm.envUint("USER0"));
+        users[1] = vm.addr(vm.envUint("USER1"));
+        users[2] = vm.addr(vm.envUint("USER2"));
+        users[3] = vm.addr(vm.envUint("USER3"));
+        users[4] = vm.addr(vm.envUint("USER4"));
 
         console.log("Registering Users...");
         for (uint256 i; i < users.length; ++i) {

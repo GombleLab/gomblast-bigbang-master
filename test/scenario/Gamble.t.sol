@@ -14,7 +14,7 @@ contract GambleScenarioTest is Test {
     MockToken public entryToken;
     MockToken public rewardToken;
     MockSwapRouter public swapRouter;
-    IRandomOracle public randomOracle;
+    MockRandomOracle public randomOracle;
     IGamble public gamble;
 
     address[] public users;
@@ -75,8 +75,9 @@ contract GambleScenarioTest is Test {
 
         uint256 expectedWinAmount = 0.8 * 1e6;
 
-        randomOracle.setRandomNumber(round, gamble.totalUsers(round) - 1);
+        randomOracle.setRandomNumber(round, 0);
         address winner = gamble.selectWinner(0);
+        assertEq(winner, users[0], "WINNER");
 
         assertEq(gamble.totalUnclaimedAmount(), beforeTotalUnclaimedAmount + expectedWinAmount, "TOTAL_UNCLAIMED");
 

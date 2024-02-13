@@ -11,9 +11,9 @@ contract MockRandomOracle is IRandomOracle, Ownable {
 
     constructor(address owner_) Ownable(owner_) {}
 
-    function setRandomNumber(uint256 id, uint256 maxValue) external {
+    function setRandomNumber(uint256 id, uint256 number) external onlyOwner {
         // @dev We should check id is current round at the production environment.
-        _randomNumbers[id] = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % (maxValue + 1);
+        _randomNumbers[id] = number;
     }
 
     function getRandomNumber(uint256 id) external view returns (uint256) {
