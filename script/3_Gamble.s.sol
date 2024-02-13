@@ -29,9 +29,20 @@ contract GambleScript is Script {
 
         uint256 amount = gamble.joinAmount();
         for (uint256 i; i < privateKeys.length; ++i) {
-            vm.startBroadcast(privateKeys[0]);
+            address user = vm.addr(privateKeys[i]);
+            if (gamble.getUserInfo(user).lastParticipatedRoundId == round) {
+                console.log("User", user, "already participated in round", round);
+                continue;
+            }
+            if (gblast.balanceOf(user) < amount) {
+                console.log("User", user, "does not have enough GBLAST");
+                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+                gblast.mint(user, amount * 100);
+                vm.stopBroadcast();
+            }
+            vm.startBroadcast(privateKeys[i]);
             gblast.approve(address(gamble), amount);
-            gamble.join(vm.addr(privateKeys[i]));
+            gamble.join(user);
             vm.stopBroadcast();
         }
 

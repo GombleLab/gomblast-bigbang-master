@@ -62,8 +62,8 @@ contract DeployScript is Script {
         usdt.mint(deployer, 1000 * 1e6);
         gblast.mint(deployer, 1000 ether);
         for (uint256 i; i < users.length; ++i) {
-            usdt.mint(users[0], 1000 * 1e6);
-            gblast.mint(users[0], 1000 ether);
+            usdt.mint(users[i], 1000 * 1e6);
+            gblast.mint(users[i], 1000 ether);
         }
 
         vm.stopBroadcast();
